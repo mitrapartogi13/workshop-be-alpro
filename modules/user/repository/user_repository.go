@@ -22,3 +22,9 @@ func (r *UserRepository) FindByEmail(email string) (*entities.User, error) {
     err := r.db.Where("email = ?", email).First(&user).Error
     return &user, err
 }
+
+func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
+    var user entities.User
+    err := r.db.First(&user, id).Error
+    return &user, err
+}

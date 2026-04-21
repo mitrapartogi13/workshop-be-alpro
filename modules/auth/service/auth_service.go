@@ -3,7 +3,7 @@ package service
 import (
 	"errors"
 
-
+	"github.com/Mobilizes/materi-be-alpro/database/entities"
 	"github.com/Mobilizes/materi-be-alpro/modules/auth/dto"
 	userRepo "github.com/Mobilizes/materi-be-alpro/modules/user/repository"
 	"github.com/Mobilizes/materi-be-alpro/pkg/helpers"
@@ -12,6 +12,10 @@ import (
 type AuthService struct {
 	userRepo   *userRepo.UserRepository
 	jwtService *JWTService
+}
+
+type UserService struct {
+	repo *userRepo.UserRepository
 }
 
 func NewAuthService(userRepo *userRepo.UserRepository, jwtService *JWTService) *AuthService {
@@ -37,4 +41,17 @@ func (s *AuthService) Login(req *dto.LoginRequest) (string, error) {
 	}
 
 	return token, nil
+}
+
+
+func (s *UserService) GetUserByID(id uint) (*entities.User, error) {
+    // Panggil fungsi FindByID dari s.repo dengan parameter 'id', lalu kembalikan (return) hasilnya.
+	// userid := s.repo.FindByID(id)
+	// return userid, nil
+
+	user, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, errors.New("404")
+	}
+	return user, nil
 }

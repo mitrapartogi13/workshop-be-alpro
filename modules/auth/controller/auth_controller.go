@@ -3,11 +3,11 @@ package controller
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/Mobilizes/materi-be-alpro/modules/auth/dto"
 	"github.com/Mobilizes/materi-be-alpro/modules/auth/service"
 	"github.com/Mobilizes/materi-be-alpro/modules/auth/validation"
 	"github.com/Mobilizes/materi-be-alpro/pkg/utils"
+	"github.com/gin-gonic/gin"
 )
 
 type AuthController struct {
