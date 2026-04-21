@@ -23,6 +23,7 @@ func (r *UserRepository) FindByEmail(email string) (*entities.User, error) {
     return &user, err
 }
 
+// buat functin untuk mengambil data user berdasarkan id
 func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
     var user entities.User
     err := r.db.First(&user, id).Error

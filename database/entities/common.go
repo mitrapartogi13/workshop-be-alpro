@@ -1,8 +1,8 @@
 package entities
 
 import (
-    "time"
-    "gorm.io/gorm"
+	"time"
+	"gorm.io/gorm"
 )
 
 // Common model equivalent of gorm.Model

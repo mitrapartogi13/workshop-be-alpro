@@ -30,3 +30,12 @@ func (s *UserService) CreateUser(req *dto.CreateUserRequest) (*entities.User, er
     err = s.repo.Create(user)
     return user, err
 }
+
+// ambil data dari repository berdasarkan id
+func (s *UserService) GetUserByID(id uint) (*entities.User, error) {
+    user, err := s.repo.FindByID(id)
+    if err != nil {
+        return nil, err
+    }
+    return user, nil
+}
