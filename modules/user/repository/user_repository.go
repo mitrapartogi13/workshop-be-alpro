@@ -29,3 +29,10 @@ func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
     err := r.db.First(&user, id).Error
     return &user, err
 }
+
+// chal B : untuk mengambil semua data user dari database pake GORM
+func (r *UserRepository) FindAll() ([]entities.User, error) {
+    var users []entities.User
+    err := r.db.Find(&users).Error
+    return users, err
+}

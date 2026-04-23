@@ -39,3 +39,12 @@ func (s *UserService) GetUserByID(id uint) (*entities.User, error) {
     }
     return user, nil
 }
+
+// chall B : manggil repository dan mengembalikan list user
+func (s *UserService) GetAllUsers() ([]entities.User, error) {
+    users, err := s.repo.FindAll()
+    if err != nil {
+        return nil, err
+    }
+    return users, nil
+}

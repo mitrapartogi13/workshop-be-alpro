@@ -1,18 +1,17 @@
 package controller
 
 import (
-    "net/http"
+	"net/http"
 
-    "github.com/gin-gonic/gin"
-    "github.com/Mobilizes/materi-be-alpro/modules/user/service"
-    "github.com/Mobilizes/materi-be-alpro/modules/user/validation"
-    "github.com/Mobilizes/materi-be-alpro/pkg/utils"
+	"github.com/Mobilizes/materi-be-alpro/modules/user/service"
+	"github.com/Mobilizes/materi-be-alpro/modules/user/validation"
+	"github.com/Mobilizes/materi-be-alpro/pkg/utils"
+	"github.com/gin-gonic/gin"
 
+	// import baru
+	"strconv"
 
-
-    // import baru
-    "strconv"
-    "github.com/Mobilizes/materi-be-alpro/modules/user/dto"
+	"github.com/Mobilizes/materi-be-alpro/modules/user/dto"
 )
 
 type UserController struct {
@@ -66,4 +65,28 @@ func (ctrl *UserController) GetUserByID(c *gin.Context) {
     }
 
     utils.SuccessResponse(c, http.StatusOK, "Berhasil mengambil data user", res)
+
+    
+}
+
+// fungsi untuk menerima request HTTP, memanggil service, melakukan format data ke DTO, dan mengirim response JSON
+func (ctrl *UserController) GetAllUsers(c *gin.Context) {
+    users, err := ctrl.service.GetAllUsers()
+    if err != nil {
+        utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal mengambil data user")
+        return
+    }
+
+    // format response ke array DTO agar password tidak bocor
+    var res []dto.UserResponse
+    for _, user := range users {
+        res = append(res, dto.UserResponse{
+            ID:    user.ID,
+            Name:  user.Name,
+            Email: user.Email,
+            Role:  user.Role,
+        })
+    }
+
+    utils.SuccessResponse(c, http.StatusOK, "Berhasil mengambil semua data user", res)
 }

@@ -14,7 +14,9 @@ func RegisterUserRoutes(r *gin.RouterGroup, ctrl *controller.UserController, jwt
     users := r.Group("/users")
     {
         users.POST("", ctrl.CreateUser)
+        users.GET("", middlewares.Authentication(jwtSvc), ctrl.GetAllUsers) // chall B
         // tambahin route GET /:id dengan middleware Authentication
         users.GET("/:id", middlewares.Authentication(jwtSvc), ctrl.GetUserByID)
     }
 }
+
