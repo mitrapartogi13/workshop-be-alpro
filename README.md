@@ -1059,6 +1059,135 @@ func RegisterUserRoutes(r *gin.RouterGroup, ctrl *controller.UserController) {
 
 > Ambil satu user berdasarkan ID. Kembalikan `404` jika tidak ditemukan.
 
+Sebelum masuk ke langkah-langkah kita harus konfig dulu database di pgAdmin4
+
+Persiapan DB dan Konfigurasi
+
+1. Buat database bernama `go_workshop` di pgAdmin.
+2. Pastikan tabel `users` lama (jika ada) sudah di-drop agar GORM membuat ulang dengan tipe ID `integer` (sebelumnya pakai uuid).
+3. Sesuaikan file `.env` di root project:
+    ```
+    DB_HOST=localhost
+    DB_USER=postgres
+    DB_PASSWORD=mypasword
+    DB_NAME=go_workshop
+    DB_PORT=5432
+    JWT_SECRET=skibiditoilet
+    ```
+### 1. Update Repository
+
+Tambahkan fungsi untuk mengambil satu data user berdasarkan ID dari database menggunakan GORM.
+
+**File:** `modules/user/repository/user_repository.go`
+
+```go
+func (r *UserRepository) FindByID(id uint) (*entities.User, error) {
+    var user entities.User
+    err := r.db.First(&user, id).Error
+    return &user, err
+}
+```
+
+### 2. Update Service
+
+Tambahkan fungsi untuk memanggil repository dan mengembalikan satu user berdasarkan ID.
+
+**File:** `modules/user/service/user_service.go`
+
+```go
+func (s *UserService) GetUserByID(id uint) (*entities.User, error) {
+    user, err := s.repo.FindByID(id)
+    if err != nil {
+        return nil, err
+    }
+    return user, nil
+}
+```
+
+### 3. Update Controller
+
+Tambahkan fungsi untuk menerima request HTTP, mengambil parameter ID, memanggil service, dan mengirim response JSON (mengembalikan 404 jika tidak ditemukan).
+
+**File:** `modules/user/controller/user_controller.go`
+
+```go
+import "strconv" // pastikan import ini ada di atas file
+
+func (ctrl *UserController) GetUserByID(c *gin.Context) {
+    idParam := c.Param("id")
+    id, err := strconv.Atoi(idParam)
+    if err != nil {
+        utils.ErrorResponse(c, http.StatusBadRequest, "ID tidak valid")
+        return
+    }
+
+    user, err := ctrl.service.GetUserByID(uint(id))
+    if err != nil {
+        utils.ErrorResponse(c, http.StatusNotFound, "User tidak ditemukan")
+        return
+    }
+
+    // format response ke DTO agar password tidak bocor
+    res := dto.UserResponse{
+        ID:    user.ID,
+        Name:  user.Name,
+        Email: user.Email,
+        Role:  user.Role,
+    }
+
+    utils.SuccessResponse(c, http.StatusOK, "Berhasil mengambil data user", res)
+}
+```
+
+### 4. Daftarkan Route
+
+Tambahkan endpoint `GET "/:id"` ke dalam router group `/users`.
+
+**File:** `modules/user/routes.go`
+
+```go
+users := r.Group("/users")
+{
+    users.POST("", ctrl.CreateUser)
+    users.GET("/:id", middlewares.Authentication(jwtSvc), ctrl.GetUserByID) // tambahkan endpoint GET "/:id"
+}
+```
+
+### 5. Cara jalanin :
+
+1. **Jalankan aplikasi:** Buka terminal di root direktori proyek, lalu jalankan:
+    
+    ```bash
+    go run cmd/main.go
+    ```
+
+2. Buat User Baru (Opsional)
+
+   ```bash
+   curl -X POST http://localhost:8080/api/users -H "Content-Type: application/json" -d "{\"name\": \"Mitra\", \"email\": \"mitra@example.com\", \"password\": \"password123\"}"
+   ```
+
+3. Login
+
+   ```bash
+   curl -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d "{\"email\": \"mitra@example.com\", \"password\": \"password123\"}"
+   ```
+
+4. Tes endpoint (Berhasil)
+
+   ```bash
+   curl -X GET http://localhost:8080/api/users/1 -H "Authorization: Bearer <token>"
+   ```
+
+5. Tes endpoint (Not Found / 404)
+
+   ```bash
+   curl -X GET http://localhost:8080/api/users/2 -H "Authorization: Bearer <token>"
+   ```
+
+### Screenshot : 
+<img width="1419" height="747" alt="Screenshot 2026-04-21 192140" src="https://github.com/user-attachments/assets/3ebea467-fd27-4668-918f-e4d56856d508" />
+
 ### Challenge B -- `GET /users`
 
 > Ambil semua user. Kembalikan array JSON.
