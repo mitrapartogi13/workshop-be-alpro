@@ -1063,6 +1063,110 @@ func RegisterUserRoutes(r *gin.RouterGroup, ctrl *controller.UserController) {
 
 > Ambil semua user. Kembalikan array JSON.
 
+### 1. Update Repository
+
+Tambahkan fungsi untuk mengambil semua data user dari database menggunakan GORM.
+
+**File:** `modules/user/repository/user_repository.go`
+
+``` go
+func (r *UserRepository) FindAll() ([]entities.User, error) {
+    var users []entities.User
+    err := r.db.Find(&users).Error
+    return users, err
+}
+```
+
+### 2. Update Service
+
+Tambahkan fungsi untuk memanggil repository dan mengembalikan list user.
+
+**File:** `modules/user/service/user_service.go`
+
+``` go
+func (s *UserService) GetAllUsers() ([]entities.User, error) {
+    users, err := s.repo.FindAll()
+    if err != nil {
+        return nil, err
+    }
+    return users, nil
+}
+```
+
+### 3. Update Controller
+
+Tambahkan fungsi untuk menerima request HTTP, memanggil service, melakukan format data ke DTO, dan mengirim response JSON.
+
+**File:** `modules/user/controller/user_controller.go`
+
+
+``` go
+func (ctrl *UserController) GetAllUsers(c *gin.Context) {
+    users, err := ctrl.service.GetAllUsers()
+    if err != nil {
+        utils.ErrorResponse(c, http.StatusInternalServerError, "Gagal mengambil data user")
+        return
+    }
+
+    // format response ke array DTO agar password tidak bocor
+    var res []dto.UserResponse
+    for _, user := range users {
+        res = append(res, dto.UserResponse{
+            ID:    user.ID,
+            Name:  user.Name,
+            Email: user.Email,
+            Role:  user.Role,
+        })
+    }
+
+    utils.SuccessResponse(c, http.StatusOK, "Berhasil mengambil semua data user", res)
+}
+```
+
+### 4. Daftarkan Route
+
+Tambahkan endpoint `GET ""` ke dalam router group `/users`.
+
+**File:** `modules/user/routes.go`
+
+``` go
+users := r.Group("/users")
+{
+    users.POST("", ctrl.CreateUser)
+    users.GET("", middlewares.Authentication(jwtSvc), ctrl.GetAllUsers) // tambahkan endpoint GET ""
+    users.GET("/:id", middlewares.Authentication(jwtSvc), ctrl.GetUserByID)
+}
+```
+
+### 5. Cara jalanin :
+
+1. **Jalankan aplikasi:** Buka terminal di root direktori proyek, lalu jalankan:
+    
+    ``` bash
+    go run cmd/main.go
+    ```
+
+2. Buat User Baru (Opsional)
+
+   ``` bash
+   curl -X POST http://localhost:8080/api/users -H "Content-Type: application/json" -d "{\"name\": \"Mitra\", \"email\": \"mitra@example.com\", \"password\": \"password123\"}"
+   ```
+
+3. Login
+
+   ``` bash
+   curl -X POST http://localhost:8080/api/auth/login -H "Content-Type: application/json" -d "{\"email\": \"mitra@example.com\", \"password\": \"password123\"}"
+   ```
+
+4. Tes endpoint
+
+   ``` bash
+   curl -X GET http://localhost:8080/api/users -H "Authorization: Bearer <token>"
+   ```
+
+### Screenshot : 
+<img width="1464" height="481" alt="image" src="https://github.com/user-attachments/assets/87858426-3457-4ed6-b4b6-3815690adbd0" />
+
 > [!WARNING]
 > **Tips debugging:** Error paling umum di Go adalah lupa menangani `if err != nil`. Kalau ada `panic`, cari baris yang tidak menangani error return-nya. Gunakan `fmt.Println(err)` untuk print error ke terminal.
 
